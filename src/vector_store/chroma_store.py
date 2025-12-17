@@ -1,8 +1,6 @@
-"""ChromaDB vector store implementation"""
-
 import json
 import os
-from typing import Dict, List, Optional
+from collections.abc import Sequence
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
@@ -12,230 +10,160 @@ from ..database.models import Product, VectorSearchResult
 from .embeddings import embedding_manager
 
 
-class ChromaVectorStore:
-    """ChromaDB-based vector store for product search"""
+def _prepare_product_metadata(product: Product) -> dict[str, str | int | float]:
+    metadata = {
+        "product_id": product.product_id,
+        "name": product.name,
+        "price": product.price,
+        "category": product.category,
+        "stock_status": product.stock_status,
+        "description": product.description[:500],
+    }
 
-    def __init__(self, persist_directory: Optional[str] = None):
-        """Initialize ChromaDB vector store"""
+    if product.specifications:
+        metadata["specifications"] = json.dumps(product.specifications)
+
+    return metadata
+
+
+def _reconstruct_product_from_metadata(
+    metadata: dict[str, str | int | float],
+) -> Product:
+    specifications = None
+    if "specifications" in metadata:
+        try:
+            specifications = json.loads(str(metadata["specifications"]))
+        except (json.JSONDecodeError, TypeError):
+            specifications = None
+
+    return Product(
+        product_id=str(metadata["product_id"]),
+        name=str(metadata["name"]),
+        description=str(metadata["description"]),
+        price=float(metadata["price"]),
+        stock_status=str(metadata["stock_status"]),
+        category=str(metadata["category"]),
+        specifications=specifications,
+    )
+
+
+class ChromaVectorStore:
+    def __init__(self, persist_directory: str | None = None) -> None:
         self.persist_directory = persist_directory or settings.vector_db_path
-        
-        # Ensure directory exists
         os.makedirs(self.persist_directory, exist_ok=True)
-        
-        # Initialize ChromaDB client
+
         self.client = chromadb.PersistentClient(
             path=self.persist_directory,
-            settings=ChromaSettings(anonymized_telemetry=False)
+            settings=ChromaSettings(anonymized_telemetry=False),
         )
-        
-        # Get or create collection
+
         self.collection_name = settings.vector_collection_name
         try:
             self.collection = self.client.get_collection(name=self.collection_name)
         except Exception:
             self.collection = self.client.create_collection(
                 name=self.collection_name,
-                metadata={"description": "Product embeddings for e-commerce chatbot"}
+                metadata={"description": "Product embeddings for e-commerce chatbot"},
             )
 
     def add_product(self, product: Product) -> bool:
-        """Add product to vector store"""
-        try:
-            # Prepare text for embedding
-            product_text = embedding_manager.prepare_product_text(product)
-            
-            # Generate embedding
-            embedding = embedding_manager.generate_embedding(product_text)
-            
-            # Prepare metadata
-            metadata = {
-                "product_id": product.product_id,
-                "name": product.name,
-                "price": product.price,
-                "category": product.category,
-                "stock_status": product.stock_status,
-                "description": product.description[:500],  # Truncate for metadata
-            }
-            
-            # Add specifications to metadata if they exist
-            if product.specifications:
-                metadata["specifications"] = json.dumps(product.specifications)
-            
-            # Add to collection
-            self.collection.add(
-                documents=[product_text],
-                embeddings=[embedding],
-                metadatas=[metadata],
-                ids=[product.product_id]
-            )
-            
-            return True
-            
-        except Exception as e:
-            raise Exception(f"Failed to add product to vector store: {str(e)}")
+        product_text = embedding_manager.prepare_product_text(product)
+        embedding = embedding_manager.generate_embedding(product_text)
+        metadata = _prepare_product_metadata(product)
 
-    def add_products_batch(self, products: List[Product]) -> bool:
-        """Add multiple products to vector store"""
-        try:
-            if not products:
-                return True
-            
-            # Prepare texts and metadata
-            texts = []
-            metadatas = []
-            ids = []
-            
-            for product in products:
-                product_text = embedding_manager.prepare_product_text(product)
-                texts.append(product_text)
-                
-                metadata = {
-                    "product_id": product.product_id,
-                    "name": product.name,
-                    "price": product.price,
-                    "category": product.category,
-                    "stock_status": product.stock_status,
-                    "description": product.description[:500],
-                }
-                
-                if product.specifications:
-                    metadata["specifications"] = json.dumps(product.specifications)
-                
-                metadatas.append(metadata)
-                ids.append(product.product_id)
-            
-            # Generate embeddings in batch
-            embeddings = embedding_manager.generate_embeddings_batch(texts)
-            
-            # Add to collection
-            self.collection.add(
-                documents=texts,
-                embeddings=embeddings,
-                metadatas=metadatas,
-                ids=ids
-            )
-            
+        self.collection.add(
+            documents=[product_text],
+            embeddings=[embedding],
+            metadatas=[metadata],
+            ids=[product.product_id],
+        )
+        return True
+
+    def add_products_batch(self, products: Sequence[Product]) -> bool:
+        if not products:
             return True
-            
-        except Exception as e:
-            raise Exception(f"Failed to add products batch to vector store: {str(e)}")
+
+        texts = [
+            embedding_manager.prepare_product_text(product) for product in products
+        ]
+        metadatas = [_prepare_product_metadata(product) for product in products]
+        ids = [product.product_id for product in products]
+        embeddings = embedding_manager.generate_embeddings_batch(texts)
+
+        self.collection.add(
+            documents=texts, embeddings=embeddings, metadatas=metadatas, ids=ids
+        )
+        return True
 
     def search_products(
         self,
         query: str,
         n_results: int = 5,
-        category_filter: Optional[str] = None,
-        price_filter: Optional[Dict[str, float]] = None
-    ) -> List[VectorSearchResult]:
-        """Search products using vector similarity"""
-        try:
-            # Generate query embedding
-            query_embedding = embedding_manager.generate_embedding(query)
-            
-            # Prepare where clause for filtering
-            where_clause = {}
-            if category_filter:
-                where_clause["category"] = {"$eq": category_filter}
-            
-            # Add price filtering if specified
-            if price_filter:
-                if "min_price" in price_filter:
-                    where_clause["price"] = {"$gte": price_filter["min_price"]}
-                if "max_price" in price_filter:
-                    if "price" not in where_clause:
-                        where_clause["price"] = {}
-                    where_clause["price"]["$lte"] = price_filter["max_price"]
-            
-            # Perform vector search
-            results = self.collection.query(
-                query_embeddings=[query_embedding],
-                n_results=min(n_results, 20),  # Limit to reasonable number
-                where=where_clause if where_clause else None,
-                include=["documents", "metadatas", "distances"]
-            )
-            
-            # Convert results to VectorSearchResult objects
-            search_results = []
-            if results["metadatas"] and results["metadatas"][0]:
-                for i, metadata in enumerate(results["metadatas"][0]):
-                    # Reconstruct Product from metadata
-                    specifications = None
-                    if "specifications" in metadata:
-                        try:
-                            specifications = json.loads(metadata["specifications"])
-                        except (json.JSONDecodeError, TypeError):
-                            specifications = None
-                    
-                    product = Product(
-                        product_id=metadata["product_id"],
-                        name=metadata["name"],
-                        description=metadata["description"],
-                        price=metadata["price"],
-                        stock_status=metadata["stock_status"],
-                        category=metadata["category"],
-                        specifications=specifications
-                    )
-                    
-                    # Calculate similarity score (ChromaDB returns distances, convert to similarity)
-                    distance = results["distances"][0][i] if results["distances"] else 0
-                    similarity_score = max(0, 1 - distance)  # Convert distance to similarity
-                    
-                    search_results.append(VectorSearchResult(
+        category_filter: str | None = None,
+        price_filter: dict[str, float] | None = None,
+    ) -> list[VectorSearchResult]:
+        query_embedding = embedding_manager.generate_embedding(query)
+
+        where_clause: dict[str, dict[str, str | float]] = {}
+        if category_filter:
+            where_clause["category"] = {"$eq": category_filter}
+
+        if price_filter:
+            price_conditions: dict[str, float] = {}
+            if "min_price" in price_filter:
+                price_conditions["$gte"] = price_filter["min_price"]
+            if "max_price" in price_filter:
+                price_conditions["$lte"] = price_filter["max_price"]
+            if price_conditions:
+                where_clause["price"] = price_conditions
+
+        results = self.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=min(n_results, 20),
+            where=where_clause if where_clause else None,
+            include=["documents", "metadatas", "distances"],
+        )
+
+        search_results = []
+        if results["metadatas"] and results["metadatas"][0]:
+            for i, metadata in enumerate(results["metadatas"][0]):
+                product = _reconstruct_product_from_metadata(metadata)
+                distance = results["distances"][0][i] if results["distances"] else 0
+                similarity_score = max(0, 1 - distance)
+
+                search_results.append(
+                    VectorSearchResult(
                         product=product,
                         score=similarity_score,
-                        metadata={"distance": distance, "rank": i + 1}
-                    ))
-            
-            return search_results
-            
-        except Exception as e:
-            raise Exception(f"Failed to search products: {str(e)}")
+                        metadata={"distance": distance, "rank": i + 1},
+                    )
+                )
+
+        return search_results
 
     def delete_product(self, product_id: str) -> bool:
-        """Delete product from vector store"""
-        try:
-            self.collection.delete(ids=[product_id])
-            return True
-        except Exception as e:
-            raise Exception(f"Failed to delete product: {str(e)}")
+        self.collection.delete(ids=[product_id])
+        return True
 
     def update_product(self, product: Product) -> bool:
-        """Update product in vector store"""
-        try:
-            # Delete existing product
-            self.delete_product(product.product_id)
-            
-            # Add updated product
-            return self.add_product(product)
-            
-        except Exception as e:
-            raise Exception(f"Failed to update product: {str(e)}")
+        self.delete_product(product.product_id)
+        return self.add_product(product)
 
-    def get_collection_info(self) -> Dict:
-        """Get information about the collection"""
-        try:
-            count = self.collection.count()
-            return {
-                "collection_name": self.collection_name,
-                "document_count": count,
-                "persist_directory": self.persist_directory
-            }
-        except Exception as e:
-            raise Exception(f"Failed to get collection info: {str(e)}")
+    def get_collection_info(self) -> dict[str, str | int]:
+        count = self.collection.count()
+        return {
+            "collection_name": self.collection_name,
+            "document_count": count,
+            "persist_directory": self.persist_directory,
+        }
 
     def clear_collection(self) -> bool:
-        """Clear all documents from collection"""
-        try:
-            # Delete the collection and recreate it
-            self.client.delete_collection(name=self.collection_name)
-            self.collection = self.client.create_collection(
-                name=self.collection_name,
-                metadata={"description": "Product embeddings for e-commerce chatbot"}
-            )
-            return True
-        except Exception as e:
-            raise Exception(f"Failed to clear collection: {str(e)}")
+        self.client.delete_collection(name=self.collection_name)
+        self.collection = self.client.create_collection(
+            name=self.collection_name,
+            metadata={"description": "Product embeddings for e-commerce chatbot"},
+        )
+        return True
 
 
-# Global vector store instance
 vector_store = ChromaVectorStore()

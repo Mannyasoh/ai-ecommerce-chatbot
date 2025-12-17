@@ -1,16 +1,12 @@
-"""Main application entry point for AI E-Commerce Chatbot"""
-
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 
-# Load environment variables
 from dotenv import load_dotenv
+from loguru import logger
+
 load_dotenv()
 
-# Add src to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
@@ -18,213 +14,253 @@ from src.agents.orchestrator import orchestrator
 from src.config import settings, validate_environment
 from src.database.database import db_manager
 from src.database.models import ChatMessage
+from src.logging_config import configure_logging
 from src.vector_store.chroma_store import vector_store
 
 
 class ECommerceChatbot:
-    """Main chatbot application class"""
+    def __init__(self) -> None:
+        validate_environment()
+        self.chat_history: list[ChatMessage] = []
+        self.orchestrator = orchestrator
+        self.db_manager = db_manager
+        self.vector_store = vector_store
+        self.logger = logger.bind(component="chatbot")
 
-    def __init__(self):
-        """Initialize the chatbot"""
-        try:
-            # Validate environment
-            validate_environment()
-            
-            # Initialize chat history
-            self.chat_history: List[ChatMessage] = []
-            
-            # Initialize components
-            self.orchestrator = orchestrator
-            self.db_manager = db_manager
-            self.vector_store = vector_store
-            
-            print("✅ E-Commerce AI Chatbot initialized successfully!")
-            print(f"📊 Vector DB: {self.vector_store.get_collection_info()}")
-            
-        except Exception as e:
-            print(f"❌ Failed to initialize chatbot: {str(e)}")
-            raise
+        self.logger.info("E-Commerce AI Chatbot initialized successfully")
+        collection_info = self.vector_store.get_collection_info()
+        self.logger.info("Vector DB status", **collection_info)
 
-    def add_message_to_history(self, role: str, content: str, metadata: Dict = None) -> None:
-        """Add message to chat history"""
+    def add_message_to_history(
+        self,
+        role: str,
+        content: str,
+        metadata: dict[str, str] | None = None,
+    ) -> None:
         message = ChatMessage(
             role=role,
             content=content,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
+            function_call=None,
+            tool_calls=None,
         )
-        
-        # Add metadata if provided
-        if metadata:
-            # Note: In a real implementation, you'd want to properly handle metadata
-            # For now, we'll store it as part of the message context
-            pass
-            
         self.chat_history.append(message)
-        
-        # Keep chat history manageable
         if len(self.chat_history) > settings.max_chat_history:
-            self.chat_history = self.chat_history[-settings.max_chat_history:]
+            self.chat_history = self.chat_history[-settings.max_chat_history :]
 
-    def process_user_message(self, message: str) -> Dict:
-        """
-        Process user message and return chatbot response.
-        
-        Args:
-            message: User input message
-            
-        Returns:
-            Dictionary with chatbot response and metadata
-        """
+    def process_user_message(self, message: str) -> dict[str, str | bool | dict | list]:
         try:
-            # Add user message to history
             self.add_message_to_history("user", message)
-            
-            # Process message through orchestrator
             result = self.orchestrator.process_message(message, self.chat_history)
-            
-            # Add assistant response to history
             if result.get("success"):
-                self.add_message_to_history(
-                    "assistant", 
-                    result["response"],
-                    metadata={
-                        "agent": result.get("agent"),
-                        "function_calls": result.get("function_calls", []),
-                        "orchestrator": result.get("orchestrator", {})
-                    }
-                )
-            
+                response_content = str(result.get("response", ""))
+                self.add_message_to_history("assistant", response_content)
             return result
-            
         except Exception as e:
+            error_message = f"I apologize, but I encountered an error: {str(e)}"
             error_response = {
                 "success": False,
-                "response": f"I apologize, but I encountered an error: {str(e)}",
+                "response": error_message,
                 "error": str(e),
-                "agent": "system"
+                "agent": "system",
             }
-            
-            self.add_message_to_history("assistant", error_response["response"])
+            self.add_message_to_history("assistant", error_message)
             return error_response
 
-    def get_conversation_summary(self) -> Dict:
-        """Get conversation summary"""
+    def get_conversation_summary(self) -> dict[str, str | int | list]:
         return self.orchestrator.get_conversation_summary(self.chat_history)
 
     def reset_conversation(self) -> None:
-        """Reset conversation state"""
         self.chat_history = []
         self.orchestrator.reset_conversation_state()
-        print("🔄 Conversation reset successfully!")
+        self.logger.info("Conversation reset successfully")
+        print("Conversation reset successfully!")
 
-    def run_interactive_chat(self) -> None:
-        """Run interactive chat session"""
-        print("\n" + "="*60)
-        print("🤖 Welcome to the AI E-Commerce Chatbot!")
-        print("="*60)
+    def _print_welcome_message(self) -> None:
+        print("\\n" + "=" * 60)
+        print("Welcome to the AI E-Commerce Chatbot!")
+        print("=" * 60)
         print("Ask me about products, prices, or place orders.")
         print("Type 'quit', 'exit', or 'bye' to end the conversation.")
         print("Type 'reset' to start a new conversation.")
         print("Type 'summary' to see conversation summary.")
         print("Type 'help' for more commands.")
-        print("-"*60)
-        
+        print("-" * 60)
+
+    def _handle_summary_command(self) -> None:
+        summary = self.get_conversation_summary()
+        print("\\nConversation Summary:")
+        print(f"   Messages: {summary['total_messages']}")
+        print(f"   Current Agent: {summary.get('current_agent', 'None')}")
+        print(f"   State: {summary.get('conversation_state', 'Unknown')}")
+        products: list[str] = summary.get("products_mentioned", [])
+        print(f"   Products Mentioned: {', '.join(products)}")
+        orders: list[str] = summary.get("orders_created", [])
+        print(f"   Orders Created: {', '.join(orders)}")
+
+    def _handle_help_command(self) -> None:
+        print("\\nAvailable Commands:")
+        print("   quit/exit/bye - End conversation")
+        print("   reset - Start new conversation")
+        print("   summary - Show conversation summary")
+        print("   help - Show this help message")
+        print("\\nExample Queries:")
+        print("   'What laptops do you have under $1500?'")
+        print("   'Show me iPhone pricing'")
+        print("   'I want to buy the MacBook Pro'")
+        print("   'Check my order status #ORD-20241213-ABC12345'")
+
+    def _handle_user_message(self, user_input: str) -> None:
+        self.logger.debug("Processing user message", user_input=user_input)
+        print("\\nProcessing...")
+        result = self.process_user_message(user_input)
+
+        if result.get("success"):
+            agent_name = result.get("agent", "assistant")
+            self.logger.info(
+                "Agent response generated",
+                agent=agent_name,
+                response_length=len(str(result.get("response", ""))),
+            )
+            print(f"\\nAssistant ({agent_name}): {result['response']}")
+
+            if settings.debug and result.get("function_calls"):
+                function_calls = result.get("function_calls", [])
+                if isinstance(function_calls, list):
+                    func_names = [fc["name"] for fc in function_calls]
+                    self.logger.debug("Functions used", functions=func_names)
+                    print(f"\\nFunctions Used: {func_names}")
+
+            if result.get("handoff_occurred"):
+                handoff_from = result["handoff_from"]
+                handoff_to = result["handoff_to"]
+                self.logger.info(
+                    "Agent handoff occurred",
+                    from_agent=handoff_from,
+                    to_agent=handoff_to,
+                )
+                handoff_msg = f"{handoff_from} -> {handoff_to}"
+                print(f"Handoff: {handoff_msg}")
+        else:
+            error_msg = result.get("response", "Unknown error occurred")
+            self.logger.error("User message processing failed", error=error_msg)
+            print(f"\\nError: {error_msg}")
+
+    def run_interactive_chat(self) -> None:
+        print("\n" + "=" * 60)
+        print("Welcome to the AI E-Commerce Chatbot!")
+        print("=" * 60)
+        print("Ask me about products, prices, or place orders.")
+        print("Type 'quit', 'exit', or 'bye' to end the conversation.")
+        print("Type 'reset' to start a new conversation.")
+        print("Type 'summary' to see conversation summary.")
+        print("Type 'help' for more commands.")
+        print("-" * 60)
+
         while True:
             try:
-                # Get user input
-                user_input = input("\n💬 You: ").strip()
-                
-                # Handle special commands
-                if user_input.lower() in ['quit', 'exit', 'bye']:
-                    print("\n👋 Thank you for using our AI E-Commerce Chatbot!")
+                user_input = input("\nYou: ").strip()
+
+                if user_input.lower() in ["quit", "exit", "bye"]:
+                    print("\nThank you for using our AI E-Commerce Chatbot!")
                     break
-                
-                elif user_input.lower() == 'reset':
+
+                elif user_input.lower() == "reset":
                     self.reset_conversation()
                     continue
-                
-                elif user_input.lower() == 'summary':
+
+                elif user_input.lower() == "summary":
                     summary = self.get_conversation_summary()
-                    print(f"\n📊 Conversation Summary:")
+                    print("\nConversation Summary:")
                     print(f"   Messages: {summary['total_messages']}")
                     print(f"   Current Agent: {summary.get('current_agent', 'None')}")
                     print(f"   State: {summary.get('conversation_state', 'Unknown')}")
-                    print(f"   Products Mentioned: {', '.join(summary.get('products_mentioned', []))}")
-                    print(f"   Orders Created: {', '.join(summary.get('orders_created', []))}")
+                    products: list[str] = summary.get("products_mentioned", [])
+                    print(f"   Products Mentioned: {', '.join(products)}")
+                    orders: list[str] = summary.get("orders_created", [])
+                    print(f"   Orders Created: {', '.join(orders)}")
                     continue
-                
-                elif user_input.lower() == 'help':
-                    print(f"\n🔧 Available Commands:")
-                    print(f"   quit/exit/bye - End conversation")
-                    print(f"   reset - Start new conversation")
-                    print(f"   summary - Show conversation summary")
-                    print(f"   help - Show this help message")
-                    print(f"\n🛍️ Example Queries:")
-                    print(f"   'What laptops do you have under $1500?'")
-                    print(f"   'Show me iPhone pricing'")
-                    print(f"   'I want to buy the MacBook Pro'")
-                    print(f"   'Check my order status #ORD-20241213-ABC12345'")
+
+                elif user_input.lower() == "help":
+                    print("\nAvailable Commands:")
+                    print("   quit/exit/bye - End conversation")
+                    print("   reset - Start new conversation")
+                    print("   summary - Show conversation summary")
+                    print("   help - Show this help message")
+                    print("\nExample Queries:")
+                    print("   'What laptops do you have under $1500?'")
+                    print("   'Show me iPhone pricing'")
+                    print("   'I want to buy the MacBook Pro'")
+                    print("   'Check my order status #ORD-20241213-ABC12345'")
                     continue
-                
+
                 elif not user_input:
-                    print("⚠️ Please enter a message.")
+                    print("Please enter a message.")
                     continue
-                
-                # Process the message
-                print("\n🤔 Processing...")
+
+                print("\nProcessing...")
                 result = self.process_user_message(user_input)
-                
-                # Display response
+
                 if result.get("success"):
                     agent_name = result.get("agent", "assistant")
-                    agent_emoji = "🔍" if agent_name == "rag_agent" else "🛒" if agent_name == "order_agent" else "🤖"
-                    
-                    print(f"\n{agent_emoji} Assistant ({agent_name}): {result['response']}")
-                    
-                    # Show function calls if in debug mode
+                    print(f"\nAssistant ({agent_name}): {result['response']}")
+
                     if settings.debug and result.get("function_calls"):
-                        print(f"\n🔧 Functions Used: {[fc['name'] for fc in result['function_calls']]}")
-                        
-                    # Show handoff information
+                        function_calls = result.get("function_calls", [])
+                        if isinstance(function_calls, list):
+                            func_names = [fc["name"] for fc in function_calls]
+                            print(f"\nFunctions Used: {func_names}")
+
                     if result.get("handoff_occurred"):
-                        print(f"🔄 Handoff: {result['handoff_from']} → {result['handoff_to']}")
-                        
+                        handoff_from = result["handoff_from"]
+                        handoff_to = result["handoff_to"]
+                        handoff_msg = f"{handoff_from} -> {handoff_to}"
+                        print(f"Handoff: {handoff_msg}")
+
                 else:
-                    print(f"\n❌ Error: {result.get('response', 'Unknown error occurred')}")
-                
+                    print(
+                        f"\nError: {result.get('response', 'Unknown error occurred')}"
+                    )
+
             except KeyboardInterrupt:
-                print("\n\n👋 Goodbye!")
+                print("\n\nGoodbye!")
                 break
-                
+
             except Exception as e:
-                print(f"\n❌ Unexpected error: {str(e)}")
+                print(f"\nUnexpected error: {str(e)}")
                 if settings.debug:
                     import traceback
+
                     traceback.print_exc()
 
 
-def main():
-    """Main function"""
+def main() -> None:
     try:
-        # Create chatbot instance
+        # Configure logging first
+        configure_logging()
+        logger.info("Application starting up")
+
         chatbot = ECommerceChatbot()
-        
-        # Check if we have sample data
         collection_info = chatbot.vector_store.get_collection_info()
         if collection_info["document_count"] == 0:
-            print("\n⚠️ No products found in vector database.")
+            logger.warning("No products found in vector database", **collection_info)
+            print("\nNo products found in vector database.")
             print("   Run the data loading script to add sample products.")
             print("   Example: python scripts/load_sample_data.py")
-        
-        # Start interactive chat
+
+        logger.info("Starting interactive chat session")
         chatbot.run_interactive_chat()
-        
     except Exception as e:
-        print(f"❌ Application failed to start: {str(e)}")
+        logger.critical("Application failed to start", error=str(e))
+        print(f"Application failed to start: {str(e)}")
         if settings.debug:
             import traceback
+
+            logger.debug("Full traceback", traceback=traceback.format_exc())
             traceback.print_exc()
         sys.exit(1)
+    finally:
+        logger.info("Application shutting down")
 
 
 if __name__ == "__main__":
