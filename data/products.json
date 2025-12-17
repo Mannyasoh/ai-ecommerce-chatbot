@@ -1,0 +1,482 @@
+[
+  {
+    "product_id": "IPHONE15PRO-001",
+    "name": "iPhone 15 Pro",
+    "description": "The latest flagship iPhone with A17 Pro chip, titanium design, advanced camera system with 3x zoom, and USB-C connectivity. Features a 6.1-inch Super Retina XDR display with ProMotion technology.",
+    "price": 999.99,
+    "stock_status": "in_stock",
+    "category": "smartphones",
+    "specifications": {
+      "processor": "A17 Pro chip",
+      "storage": "128GB",
+      "display": "6.1-inch Super Retina XDR",
+      "camera": "48MP Main, 12MP Ultra Wide, 12MP Telephoto",
+      "color": "Natural Titanium",
+      "connectivity": "USB-C, 5G"
+    }
+  },
+  {
+    "product_id": "IPHONE15-001",
+    "name": "iPhone 15",
+    "description": "The new iPhone 15 with A16 Bionic chip, improved cameras, and USB-C. Features a 6.1-inch Super Retina XDR display and advanced dual-camera system.",
+    "price": 799.99,
+    "stock_status": "in_stock",
+    "category": "smartphones",
+    "specifications": {
+      "processor": "A16 Bionic chip",
+      "storage": "128GB",
+      "display": "6.1-inch Super Retina XDR",
+      "camera": "48MP Main, 12MP Ultra Wide",
+      "color": "Pink",
+      "connectivity": "USB-C, 5G"
+    }
+  },
+  {
+    "product_id": "MACBOOK-PRO-001",
+    "name": "MacBook Pro 14-inch",
+    "description": "Apple MacBook Pro with M3 Pro chip, 14-inch Liquid Retina XDR display, 18GB unified memory, and 512GB SSD storage. Perfect for professional workflows.",
+    "price": 1999.99,
+    "stock_status": "in_stock",
+    "category": "laptops",
+    "specifications": {
+      "processor": "M3 Pro chip",
+      "memory": "18GB unified memory",
+      "storage": "512GB SSD",
+      "display": "14-inch Liquid Retina XDR",
+      "color": "Space Gray",
+      "ports": "3x Thunderbolt 4, HDMI, MagSafe 3"
+    }
+  },
+  {
+    "product_id": "MACBOOK-AIR-001",
+    "name": "MacBook Air 15-inch",
+    "description": "The new MacBook Air with M3 chip, 15.3-inch display, exceptional battery life up to 18 hours, and incredibly thin design at just 11.5mm.",
+    "price": 1299.99,
+    "stock_status": "in_stock",
+    "category": "laptops",
+    "specifications": {
+      "processor": "M3 chip",
+      "memory": "8GB unified memory",
+      "storage": "256GB SSD",
+      "display": "15.3-inch Liquid Retina",
+      "color": "Space Gray",
+      "weight": "3.3 pounds"
+    }
+  },
+  {
+    "product_id": "DELL-XPS-001",
+    "name": "Dell XPS 13 Plus",
+    "description": "Premium ultrabook with Intel Core i7 processor, 16GB RAM, 512GB SSD, and stunning 13.4-inch InfinityEdge display. Perfect for productivity and creativity.",
+    "price": 1499.99,
+    "stock_status": "in_stock",
+    "category": "laptops",
+    "specifications": {
+      "processor": "Intel Core i7-1360P",
+      "memory": "16GB LPDDR5",
+      "storage": "512GB PCIe SSD",
+      "display": "13.4-inch FHD+ InfinityEdge",
+      "graphics": "Intel Iris Xe",
+      "color": "Platinum Silver"
+    }
+  },
+  {
+    "product_id": "ASUS-ROG-001",
+    "name": "ASUS ROG Zephyrus G14",
+    "description": "Powerful gaming laptop with AMD Ryzen 9 processor, NVIDIA RTX 4060 graphics, 16GB RAM, and 1TB SSD. Features a 14-inch QHD display with 165Hz refresh rate.",
+    "price": 1799.99,
+    "stock_status": "in_stock",
+    "category": "laptops",
+    "specifications": {
+      "processor": "AMD Ryzen 9 7940HS",
+      "memory": "16GB DDR5",
+      "storage": "1TB PCIe 4.0 SSD",
+      "display": "14-inch QHD 165Hz",
+      "graphics": "NVIDIA RTX 4060",
+      "color": "Eclipse Gray"
+    }
+  },
+  {
+    "product_id": "AIRPODS-PRO-001",
+    "name": "AirPods Pro (2nd generation)",
+    "description": "Apple's premium wireless earbuds with active noise cancellation, spatial audio, adaptive transparency, and up to 6 hours of listening time.",
+    "price": 249.99,
+    "stock_status": "in_stock",
+    "category": "headphones",
+    "specifications": {
+      "type": "True Wireless",
+      "noise_cancellation": "Active Noise Cancellation",
+      "battery_life": "6 hours (30 hours with case)",
+      "connectivity": "Bluetooth 5.3",
+      "features": "Spatial Audio, Adaptive Transparency",
+      "color": "White"
+    }
+  },
+  {
+    "product_id": "SONY-WH1000XM5-001",
+    "name": "Sony WH-1000XM5",
+    "description": "Industry-leading noise canceling headphones with exceptional sound quality, 30-hour battery life, and crystal-clear hands-free calling.",
+    "price": 399.99,
+    "stock_status": "in_stock",
+    "category": "headphones",
+    "specifications": {
+      "type": "Over-ear Wireless",
+      "noise_cancellation": "Industry-leading ANC",
+      "battery_life": "30 hours",
+      "connectivity": "Bluetooth 5.2, NFC",
+      "features": "Quick Charge, Multipoint connection",
+      "color": "Black"
+    }
+  },
+  {
+    "product_id": "GAMING-HEADSET-001",
+    "name": "SteelSeries Arctis 7P",
+    "description": "Premium wireless gaming headset with lossless 2.4GHz audio, ClearCast microphone, and 24-hour battery life. Perfect for PC and PlayStation gaming.",
+    "price": 179.99,
+    "stock_status": "in_stock",
+    "category": "headphones",
+    "specifications": {
+      "type": "Gaming Wireless",
+      "connectivity": "2.4GHz wireless, USB-C",
+      "battery_life": "24 hours",
+      "microphone": "ClearCast bidirectional",
+      "compatibility": "PC, PlayStation, Switch",
+      "color": "Black"
+    }
+  },
+  {
+    "product_id": "SAMSUNG-S24-001",
+    "name": "Samsung Galaxy S24",
+    "description": "Flagship Android smartphone with Snapdragon 8 Gen 3 processor, advanced AI features, 50MP camera system, and 6.2-inch Dynamic AMOLED display.",
+    "price": 899.99,
+    "stock_status": "in_stock",
+    "category": "smartphones",
+    "specifications": {
+      "processor": "Snapdragon 8 Gen 3",
+      "storage": "128GB",
+      "display": "6.2-inch Dynamic AMOLED 2X",
+      "camera": "50MP Main, 12MP Ultra Wide, 10MP Telephoto",
+      "color": "Phantom Black",
+      "features": "Galaxy AI, S Pen compatible"
+    }
+  },
+  {
+    "product_id": "PIXEL-8-001",
+    "name": "Google Pixel 8",
+    "description": "Google's latest smartphone with Tensor G3 chip, advanced computational photography, 7 years of OS updates, and pure Android experience.",
+    "price": 699.99,
+    "stock_status": "in_stock",
+    "category": "smartphones",
+    "specifications": {
+      "processor": "Google Tensor G3",
+      "storage": "128GB",
+      "display": "6.2-inch Actua display",
+      "camera": "50MP Main, 12MP Ultra Wide",
+      "color": "Obsidian",
+      "features": "Magic Eraser, Real Tone, Live Translate"
+    }
+  },
+  {
+    "product_id": "SURFACE-LAPTOP-001",
+    "name": "Microsoft Surface Laptop 5",
+    "description": "Elegant laptop with Intel Core i7 processor, 16GB RAM, 512GB SSD, and beautiful 13.5-inch PixelSense touchscreen display. Runs Windows 11.",
+    "price": 1399.99,
+    "stock_status": "in_stock",
+    "category": "laptops",
+    "specifications": {
+      "processor": "Intel Core i7-1255U",
+      "memory": "16GB LPDDR5x",
+      "storage": "512GB SSD",
+      "display": "13.5-inch PixelSense touchscreen",
+      "color": "Platinum",
+      "battery": "Up to 17 hours"
+    }
+  },
+  {
+    "product_id": "LOGITECH-MX-001",
+    "name": "Logitech MX Master 3S",
+    "description": "Advanced wireless mouse with ultra-precise scrolling, customizable buttons, multi-device connectivity, and ergonomic design for productivity.",
+    "price": 99.99,
+    "stock_status": "in_stock",
+    "category": "accessories",
+    "specifications": {
+      "type": "Wireless Mouse",
+      "connectivity": "Bluetooth, USB Receiver",
+      "battery": "70 days (rechargeable)",
+      "dpi": "8000 DPI",
+      "features": "MagSpeed scrolling, Flow cross-computer control",
+      "color": "Graphite"
+    }
+  },
+  {
+    "product_id": "APPLE-WATCH-001",
+    "name": "Apple Watch Series 9",
+    "description": "The most advanced Apple Watch with S9 SiP chip, double tap gesture, precision finding for iPhone, and comprehensive health monitoring.",
+    "price": 399.99,
+    "stock_status": "in_stock",
+    "category": "smartwatch",
+    "specifications": {
+      "processor": "S9 SiP",
+      "display": "45mm Always-On Retina",
+      "storage": "64GB",
+      "connectivity": "GPS + Cellular",
+      "features": "Double Tap, Precision Finding, ECG, Blood Oxygen",
+      "color": "Midnight"
+    }
+  },
+  {
+    "product_id": "KINDLE-001",
+    "name": "Kindle Paperwhite",
+    "description": "Amazon's premium e-reader with 6.8-inch glare-free display, adjustable warm light, waterproof design, and weeks of battery life.",
+    "price": 149.99,
+    "stock_status": "in_stock",
+    "category": "electronics",
+    "specifications": {
+      "display": "6.8-inch glare-free",
+      "storage": "16GB",
+      "connectivity": "Wi-Fi",
+      "battery": "Up to 10 weeks",
+      "features": "Waterproof, Adjustable warm light",
+      "color": "Black"
+    }
+  },
+  {
+    "product_id": "TABLET-IPAD-001",
+    "name": "iPad Air (5th generation)",
+    "description": "Powerful and versatile tablet with M1 chip, 10.9-inch Liquid Retina display, advanced cameras, and all-day battery life.",
+    "price": 599.99,
+    "stock_status": "in_stock",
+    "category": "tablets",
+    "specifications": {
+      "processor": "M1 chip",
+      "storage": "64GB",
+      "display": "10.9-inch Liquid Retina",
+      "camera": "12MP Wide, 12MP Ultra Wide front",
+      "color": "Space Gray",
+      "compatibility": "Apple Pencil (2nd gen), Magic Keyboard"
+    }
+  },
+  {
+    "product_id": "GAMING-CHAIR-001",
+    "name": "Herman Miller X Logitech G Embody",
+    "description": "Premium gaming chair designed for health, comfort, and peak performance. Features advanced ergonomic support and cooling technology.",
+    "price": 1495.00,
+    "stock_status": "in_stock",
+    "category": "furniture",
+    "specifications": {
+      "type": "Ergonomic Gaming Chair",
+      "materials": "Pixelated support, Cooling foam",
+      "adjustability": "Height, tilt, armrests",
+      "weight_capacity": "300 lbs",
+      "warranty": "12 years",
+      "color": "Black with cyan accents"
+    }
+  },
+  {
+    "product_id": "MONITOR-4K-001",
+    "name": "LG 27UP850-W 4K Monitor",
+    "description": "27-inch 4K UHD monitor with USB-C connectivity, HDR10 support, and factory-calibrated colors. Perfect for creative professionals.",
+    "price": 449.99,
+    "stock_status": "in_stock",
+    "category": "monitors",
+    "specifications": {
+      "size": "27-inch",
+      "resolution": "3840x2160 (4K UHD)",
+      "panel": "IPS",
+      "connectivity": "USB-C, HDMI, DisplayPort",
+      "features": "HDR10, 99% sRGB coverage",
+      "color": "White"
+    }
+  },
+  {
+    "product_id": "WEBCAM-001",
+    "name": "Logitech Brio 4K Pro",
+    "description": "Professional 4K webcam with HDR, auto-focus, and advanced noise reduction. Perfect for video conferencing and content creation.",
+    "price": 199.99,
+    "stock_status": "in_stock",
+    "category": "accessories",
+    "specifications": {
+      "resolution": "4K at 30fps, 1080p at 60fps",
+      "field_of_view": "90°, 78°, 65°",
+      "features": "HDR, Auto-focus, Noise reduction",
+      "connectivity": "USB 3.0",
+      "compatibility": "Windows, Mac, Chrome OS",
+      "color": "Black"
+    }
+  },
+  {
+    "product_id": "SPEAKER-PORTABLE-001",
+    "name": "JBL Charge 5",
+    "description": "Portable Bluetooth speaker with powerful sound, IP67 waterproof rating, and 20-hour battery life. Perfect for outdoor adventures.",
+    "price": 179.99,
+    "stock_status": "in_stock",
+    "category": "speakers",
+    "specifications": {
+      "type": "Portable Bluetooth Speaker",
+      "battery_life": "20 hours",
+      "connectivity": "Bluetooth 5.1",
+      "waterproof": "IP67 rated",
+      "features": "PartyBoost, PowerBank function",
+      "color": "Blue"
+    }
+  },
+  {
+    "product_id": "KEYBOARD-MECHANICAL-001",
+    "name": "Keychron K2 Mechanical Keyboard",
+    "description": "Compact 75% wireless mechanical keyboard with hot-swappable switches, RGB backlighting, and Mac/Windows compatibility.",
+    "price": 89.99,
+    "stock_status": "in_stock",
+    "category": "accessories",
+    "specifications": {
+      "layout": "75% compact",
+      "switches": "Gateron Red (hot-swappable)",
+      "connectivity": "Bluetooth 5.1, USB-C",
+      "features": "RGB backlighting, Mac/Windows keys",
+      "battery": "4000mAh (up to 240 hours)",
+      "color": "Space Gray"
+    }
+  },
+  {
+    "product_id": "ROUTER-WIFI6-001",
+    "name": "ASUS AX6000 WiFi 6 Router",
+    "description": "High-performance WiFi 6 router with 6000 Mbps speeds, 8 antennas, and advanced security features for homes and small offices.",
+    "price": 349.99,
+    "stock_status": "in_stock",
+    "category": "networking",
+    "specifications": {
+      "standard": "WiFi 6 (802.11ax)",
+      "speed": "6000 Mbps total",
+      "antennas": "8 external antennas",
+      "ports": "1 WAN, 8 LAN Gigabit",
+      "features": "AiMesh, WPA3 security, OFDMA",
+      "coverage": "Up to 5000 sq ft"
+    }
+  },
+  {
+    "product_id": "SSD-EXTERNAL-001",
+    "name": "Samsung T7 Portable SSD 1TB",
+    "description": "Ultra-fast portable SSD with USB 3.2 Gen 2 interface, password protection, and shock-resistant design. Perfect for professionals on the go.",
+    "price": 109.99,
+    "stock_status": "in_stock",
+    "category": "storage",
+    "specifications": {
+      "capacity": "1TB",
+      "interface": "USB 3.2 Gen 2",
+      "speed": "Up to 1050 MB/s",
+      "security": "AES 256-bit encryption",
+      "dimensions": "85 x 57 x 8mm",
+      "color": "Metallic Red"
+    }
+  },
+  {
+    "product_id": "POWERBANK-001",
+    "name": "Anker PowerCore 26800 PD",
+    "description": "High-capacity portable charger with 26800mAh battery, Power Delivery fast charging, and multiple USB ports for all your devices.",
+    "price": 79.99,
+    "stock_status": "in_stock",
+    "category": "accessories",
+    "specifications": {
+      "capacity": "26800mAh",
+      "output": "USB-C PD 30W, 2x USB-A",
+      "input": "USB-C and Micro USB",
+      "features": "Power Delivery, MultiProtect safety",
+      "weight": "1.28 lbs",
+      "color": "Black"
+    }
+  },
+  {
+    "product_id": "FITNESS-TRACKER-001",
+    "name": "Fitbit Charge 5",
+    "description": "Advanced fitness tracker with built-in GPS, stress management, sleep tracking, and 7-day battery life. Includes 6-month Fitbit Premium.",
+    "price": 149.99,
+    "stock_status": "in_stock",
+    "category": "fitness",
+    "specifications": {
+      "display": "Color AMOLED",
+      "battery": "7 days",
+      "features": "Built-in GPS, ECG, EDA stress sensor",
+      "compatibility": "iOS and Android",
+      "water_resistance": "50 meters",
+      "color": "Lunar White"
+    }
+  },
+  {
+    "product_id": "SMART-BULB-001",
+    "name": "Philips Hue Color Bulb (4-pack)",
+    "description": "Smart LED bulbs with 16 million colors, voice control compatibility, and app-based scheduling. Transform any room with dynamic lighting.",
+    "price": 199.99,
+    "stock_status": "in_stock",
+    "category": "smart_home",
+    "specifications": {
+      "type": "Smart LED Bulb",
+      "colors": "16 million colors + white",
+      "brightness": "1100 lumens",
+      "connectivity": "Zigbee, requires Hue Bridge",
+      "compatibility": "Alexa, Google Assistant, Apple HomeKit",
+      "lifespan": "25000 hours"
+    }
+  },
+  {
+    "product_id": "COFFEE-MAKER-001",
+    "name": "Breville Bambino Plus Espresso Machine",
+    "description": "Compact espresso machine with automatic milk texturing, pre-infusion, and 3-second heat-up time. Perfect for home baristas.",
+    "price": 299.99,
+    "stock_status": "out_of_stock",
+    "category": "kitchen",
+    "specifications": {
+      "type": "Espresso Machine",
+      "capacity": "67 fl oz water tank",
+      "pressure": "15 bar Italian pump",
+      "features": "Auto milk texturing, Pre-infusion",
+      "dimensions": "12.5 x 7.5 x 12 inches",
+      "color": "Stainless Steel"
+    }
+  },
+  {
+    "product_id": "DRONE-001",
+    "name": "DJI Mini 3",
+    "description": "Ultra-lightweight drone with 4K HDR video, intelligent flight modes, and extended battery life. Perfect for travel and content creation.",
+    "price": 759.99,
+    "stock_status": "in_stock",
+    "category": "cameras",
+    "specifications": {
+      "weight": "Less than 249g",
+      "camera": "4K/30fps HDR video",
+      "battery": "38 minutes flight time",
+      "range": "10km (FCC)",
+      "features": "QuickShots, ActiveTrack 4.0",
+      "color": "Grey"
+    }
+  },
+  {
+    "product_id": "VR-HEADSET-001",
+    "name": "Meta Quest 3 128GB",
+    "description": "Next-generation VR headset with mixed reality capabilities, improved graphics, and intuitive hand tracking. Includes 6 months of Meta Quest+.",
+    "price": 499.99,
+    "stock_status": "in_stock",
+    "category": "gaming",
+    "specifications": {
+      "storage": "128GB",
+      "display": "2064x2208 per eye",
+      "refresh_rate": "90Hz, 120Hz",
+      "tracking": "Inside-out tracking, hand tracking",
+      "features": "Mixed reality, passthrough",
+      "color": "White"
+    }
+  },
+  {
+    "product_id": "PRINTER-001",
+    "name": "HP OfficeJet Pro 9015e",
+    "description": "All-in-one wireless printer with automatic document feeder, borderless printing, and HP+ smart printing features. Perfect for home offices.",
+    "price": 249.99,
+    "stock_status": "in_stock",
+    "category": "office",
+    "specifications": {
+      "type": "All-in-one Inkjet",
+      "functions": "Print, Copy, Scan, Fax",
+      "connectivity": "WiFi, Ethernet, USB",
+      "print_speed": "22 ppm black, 18 ppm color",
+      "features": "Auto duplex, ADF, HP Smart app",
+      "color": "Basalt"
+    }
+  }
+]
