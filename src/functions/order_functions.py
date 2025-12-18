@@ -30,7 +30,11 @@ def create_order(
             product_name=product_name, quantity=quantity, customer_info=customer_info
         )
 
-        products = db_manager.search_products(query=product_name, limit=5)
+        # Use vector store search for consistency with RAG agent
+        from ..vector_store.chroma_store import vector_store
+
+        search_results = vector_store.search_products(query=product_name, n_results=5)
+        products = [result.product for result in search_results]
 
         if not products:
             response = OrderCreationResponse(
@@ -239,7 +243,11 @@ def validate_order_details(
     product_name: str, quantity: int
 ) -> dict[str, str | bool | int | float | dict | None]:
     try:
-        products = db_manager.search_products(query=product_name, limit=3)
+        # Use vector store search for consistency with RAG agent
+        from ..vector_store.chroma_store import vector_store
+
+        search_results = vector_store.search_products(query=product_name, n_results=3)
+        products = [result.product for result in search_results]
 
         if not products:
             return {

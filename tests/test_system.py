@@ -194,13 +194,20 @@ class TestFunctionCalling:
         assert result["products"][0]["price"] == 799.99
         assert result["products"][0]["similarity_score"] == 0.95
 
+    @patch("src.vector_store.chroma_store.vector_store")
     @patch("src.functions.order_functions.db_manager")
-    def test_create_order_function(self, mock_db):
+    def test_create_order_function(self, mock_db, mock_vector_store):
         """Test create_order function"""
+        from src.database.models import VectorSearchResult
         from src.functions.order_functions import create_order
 
-        # Mock database responses
-        mock_db.search_products.return_value = [self.test_product]
+        # Create mock vector search result
+        mock_search_result = VectorSearchResult(
+            product=self.test_product, score=0.95, metadata={}
+        )
+
+        # Mock vector store and database responses
+        mock_vector_store.search_products.return_value = [mock_search_result]
         mock_db.create_order.return_value = "ORD-TEST-12345"
 
         result = create_order("Test iPhone", quantity=1)
