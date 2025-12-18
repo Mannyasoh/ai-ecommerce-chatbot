@@ -25,7 +25,7 @@ class ConversationOrchestrator:
         if any(pattern in message_lower for pattern in order_id_patterns):
             import re
 
-            if re.search(r"ord-\d{8}-[a-z0-9]{8}|#ord[\d-]+", message_lower):
+            if re.search(r"#?ord-\d{8}-[a-z0-9]{8}", message_lower):
                 return "order_agent"
 
         return "rag_agent"

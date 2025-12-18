@@ -202,7 +202,13 @@ When creating orders:
 - Use validate_order_details first if you're unsure about product availability
 - Extract product name from context when user says "I'll take it", "confirm", etc.
 - Default quantity is 1 unless specified otherwise
-- Always confirm the order details in your response"""
+- Always confirm the order details in your response
+
+When handling order status requests:
+- Extract order IDs from user messages carefully
+- Order IDs have format: ORD-YYYYMMDD-XXXXXXXX (e.g., ORD-20251218-CC045760)
+- Remove any # prefix when extracting order IDs for function calls
+- If user provides "#ORD-20251218-CC045760", use "ORD-20251218-CC045760" for the function call"""
 
         messages = [{"role": "system", "content": system_message}]
 

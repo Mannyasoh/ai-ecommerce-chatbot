@@ -314,7 +314,10 @@ ORDER_FUNCTION_SCHEMAS = [
         "parameters": {
             "type": "object",
             "properties": {
-                "order_id": {"type": "string", "description": "Unique order identifier"}
+                "order_id": {
+                    "type": "string",
+                    "description": "Unique order identifier in format ORD-YYYYMMDD-XXXXXXXX (without # prefix if provided by user)",
+                }
             },
             "required": ["order_id"],
         },
