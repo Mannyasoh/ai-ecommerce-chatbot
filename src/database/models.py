@@ -16,8 +16,8 @@ class OrderStatus(str, Enum):
 
 class BaseTimestampModel(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    
-    @field_serializer('created_at')
+
+    @field_serializer("created_at")
     def serialize_created_at(self, value: datetime) -> str:
         return value.isoformat()
 
@@ -66,8 +66,8 @@ class OrderModel(BaseTimestampModel):
     @classmethod
     def set_updated_at(cls, v: datetime | None) -> datetime:
         return v or datetime.utcnow()
-    
-    @field_serializer('updated_at')
+
+    @field_serializer("updated_at")
     def serialize_updated_at(self, value: datetime | None) -> str | None:
         return value.isoformat() if value else None
 
@@ -86,8 +86,8 @@ class ChatMessage(BaseTimestampModel):
         if v not in allowed_roles:
             raise ValueError(f"Role must be one of: {allowed_roles}")
         return v
-    
-    @field_serializer('timestamp')
+
+    @field_serializer("timestamp")
     def serialize_timestamp(self, value: datetime) -> str:
         return value.isoformat()
 

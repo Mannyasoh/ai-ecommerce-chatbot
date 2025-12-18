@@ -118,9 +118,7 @@ def get_product_details(product_id: str) -> dict:
         return asdict(response)
 
 
-def get_products_by_category(
-    category: str, limit: int = 10
-) -> dict:
+def get_products_by_category(category: str, limit: int = 10) -> dict:
     try:
         products = db_manager.search_products(query="", category=category, limit=limit)
 

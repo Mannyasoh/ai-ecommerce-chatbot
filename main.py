@@ -76,7 +76,6 @@ class ECommerceChatbot:
         self.logger.info("Conversation reset successfully")
         print("Conversation reset successfully!")
 
-
     def run_interactive_chat(self) -> None:
         print("\n" + "=" * 60)
         print("Welcome to the AI E-Commerce Chatbot!")
