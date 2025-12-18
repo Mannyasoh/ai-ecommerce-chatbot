@@ -21,7 +21,6 @@ class OrderAgent:
         self.model = settings.openai_model
         self.function_schemas = ORDER_FUNCTION_SCHEMAS
 
-        # Function mapping
         self.function_map = {
             "create_order": create_order,
             "get_order_status": get_order_status,
@@ -62,7 +61,7 @@ class OrderAgent:
             "customer_info": {},
         }
 
-        for message in chat_history[-10:]:  # Look at last 10 messages
+        for message in chat_history[-10:]:
             content = message.content
 
             product_patterns = [
@@ -126,13 +125,10 @@ class OrderAgent:
         self, message: str, chat_history: Sequence[ChatMessage]
     ) -> dict[str, str | bool | list | dict]:
         try:
-            # Extract order context from chat history
             order_context = self.extract_order_context(chat_history)
 
-            # Build messages for OpenAI API
             messages = self._build_messages(message, chat_history, order_context)
 
-            # Call OpenAI with function calling
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
@@ -144,13 +140,11 @@ class OrderAgent:
 
             response_message = response.choices[0].message
 
-            # Handle function calls
             if response_message.tool_calls:
                 return self._handle_function_calls(
                     response_message, messages, order_context
                 )
             else:
-                # Regular response without function calls
                 return {
                     "success": True,
                     "agent": "order_agent",

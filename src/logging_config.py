@@ -7,15 +7,11 @@ from .config import settings
 
 
 def configure_logging() -> None:
-    """Configure loguru logging based on environment settings."""
-    # Remove default handler
     logger.remove()
 
-    # Create logs directory if it doesn't exist
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
 
-    # Console logging - colorized for development
     if settings.debug:
         logger.add(
             sys.stderr,
@@ -40,7 +36,6 @@ def configure_logging() -> None:
             ),
         )
 
-    # File logging with rotation
     logger.add(
         log_dir / "app.log",
         level="INFO",
@@ -55,7 +50,6 @@ def configure_logging() -> None:
         compression="zip",
     )
 
-    # Error-specific log file
     logger.add(
         log_dir / "error.log",
         level="ERROR",
@@ -71,7 +65,6 @@ def configure_logging() -> None:
         compression="zip",
     )
 
-    # JSON logging for production analysis
     if not settings.debug:
         logger.add(
             log_dir / "app.json",
@@ -86,5 +79,4 @@ def configure_logging() -> None:
 
 
 def get_logger(name: str):
-    """Get a logger instance with the given name."""
     return logger.bind(module=name)

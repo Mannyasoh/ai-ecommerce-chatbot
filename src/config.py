@@ -1,7 +1,7 @@
 import os
 
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -23,10 +23,11 @@ class Settings(BaseSettings):
     max_function_calls: int = Field(default=10)
     function_timeout: int = Field(default=30)
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8", 
+        case_sensitive=False
+    )
 
 
 def get_settings() -> Settings:

@@ -55,10 +55,8 @@ class RAGAgent:
         self, message: str, chat_history: Sequence[ChatMessage]
     ) -> dict[str, str | bool | list]:
         try:
-            # Build messages for OpenAI API
             messages = self._build_messages(message, chat_history)
 
-            # Call OpenAI with function calling
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
@@ -70,11 +68,9 @@ class RAGAgent:
 
             response_message = response.choices[0].message
 
-            # Handle function calls
             if response_message.tool_calls:
                 return self._handle_function_calls(response_message, messages)
             else:
-                # Regular response without function calls
                 return {
                     "success": True,
                     "agent": "rag_agent",
@@ -120,11 +116,9 @@ that you'll transfer them to our order specialist.""",
             }
         ]
 
-        # Add chat history (last 10 messages to avoid token limit)
         for chat_msg in chat_history[-10:]:
             messages.append({"role": chat_msg.role, "content": chat_msg.content})
 
-        # Add current message
         messages.append({"role": "user", "content": message})
 
         return messages
@@ -138,7 +132,6 @@ that you'll transfer them to our order specialist.""",
         self, response_message, messages: list[dict[str, str]]
     ) -> dict[str, str | bool | list]:
         try:
-            # Add assistant message with tool calls
             messages.append(
                 {
                     "role": "assistant",
@@ -159,12 +152,10 @@ that you'll transfer them to our order specialist.""",
 
             function_results = []
 
-            # Execute each function call
             for tool_call in response_message.tool_calls:
                 function_name = tool_call.function.name
                 function_args = json.loads(tool_call.function.arguments)
 
-                # Execute function
                 if function_name in self.function_map:
                     result = self.function_map[function_name](**function_args)
                     function_results.append(
@@ -175,7 +166,6 @@ that you'll transfer them to our order specialist.""",
                         }
                     )
 
-                    # Add function result to messages
                     messages.append(
                         {
                             "role": "tool",
@@ -184,7 +174,6 @@ that you'll transfer them to our order specialist.""",
                         }
                     )
                 else:
-                    # Function not found
                     error_result = {
                         "success": False,
                         "error": f"Unknown function: {function_name}",
@@ -205,7 +194,6 @@ that you'll transfer them to our order specialist.""",
                         }
                     )
 
-            # Get final response from OpenAI
             final_response = self.client.chat.completions.create(
                 model=self.model, messages=messages, temperature=0.1, max_tokens=1000
             )
@@ -255,11 +243,9 @@ that you'll transfer them to our order specialist.""",
 
         message_lower = message.lower()
 
-        # Check for direct order intent
         for phrase in order_intent_phrases:
             if phrase in message_lower:
-                # Make sure there's product context in recent messages
-                recent_messages = chat_history[-5:]  # Check last 5 messages
+                recent_messages = chat_history[-5:]
                 for chat_msg in recent_messages:
                     if any(
                         word in chat_msg.content.lower()

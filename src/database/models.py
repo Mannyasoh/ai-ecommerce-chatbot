@@ -1,7 +1,8 @@
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
 class OrderStatus(str, Enum):
@@ -15,9 +16,10 @@ class OrderStatus(str, Enum):
 
 class BaseTimestampModel(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    
+    @field_serializer('created_at')
+    def serialize_created_at(self, value: datetime) -> str:
+        return value.isoformat()
 
 
 class Product(BaseTimestampModel):
@@ -29,7 +31,8 @@ class Product(BaseTimestampModel):
     category: str = Field(..., min_length=1)
     specifications: dict[str, str | int | float | bool] | None = Field(None)
 
-    @validator("stock_status")
+    @field_validator("stock_status")
+    @classmethod
     def validate_stock_status(cls, v: str) -> str:
         allowed_status = ["in_stock", "out_of_stock", "discontinued"]
         if v not in allowed_status:
@@ -48,18 +51,25 @@ class OrderModel(BaseTimestampModel):
     customer_info: dict[str, str] | None = Field(None)
     updated_at: datetime | None = None
 
-    @validator("total_price")
-    def validate_total_price(cls, v: float, values: dict[str, float | int]) -> float:
-        quantity = values.get("quantity", 0)
-        unit_price = values.get("unit_price", 0)
-        expected_total = quantity * unit_price
-        if abs(v - expected_total) > 0.01:
-            raise ValueError("Total price must equal quantity × unit_price")
+    @field_validator("total_price")
+    @classmethod
+    def validate_total_price(cls, v: float, info) -> float:
+        if info.data:
+            quantity = info.data.get("quantity", 0)
+            unit_price = info.data.get("unit_price", 0)
+            expected_total = quantity * unit_price
+            if abs(v - expected_total) > 0.01:
+                raise ValueError("Total price must equal quantity × unit_price")
         return v
 
-    @validator("updated_at", always=True)
+    @field_validator("updated_at", mode="before")
+    @classmethod
     def set_updated_at(cls, v: datetime | None) -> datetime:
         return v or datetime.utcnow()
+    
+    @field_serializer('updated_at')
+    def serialize_updated_at(self, value: datetime | None) -> str | None:
+        return value.isoformat() if value else None
 
 
 class ChatMessage(BaseTimestampModel):
@@ -69,12 +79,17 @@ class ChatMessage(BaseTimestampModel):
     function_call: dict[str, str | dict] | None = Field(None)
     tool_calls: list[dict[str, str | dict]] | None = Field(None)
 
-    @validator("role")
+    @field_validator("role")
+    @classmethod
     def validate_role(cls, v: str) -> str:
         allowed_roles = ["user", "assistant", "system", "function", "tool"]
         if v not in allowed_roles:
             raise ValueError(f"Role must be one of: {allowed_roles}")
         return v
+    
+    @field_serializer('timestamp')
+    def serialize_timestamp(self, value: datetime) -> str:
+        return value.isoformat()
 
 
 class ProductSearchRequest(BaseModel):
@@ -84,13 +99,13 @@ class ProductSearchRequest(BaseModel):
     price_min: float | None = Field(None, ge=0)
     price_max: float | None = Field(None, ge=0)
 
-    @validator("price_max")
-    def validate_price_range(
-        cls, v: float | None, values: dict[str, float | None]
-    ) -> float | None:
-        price_min = values.get("price_min")
-        if v is not None and price_min is not None and v < price_min:
-            raise ValueError("price_max must be greater than price_min")
+    @field_validator("price_max")
+    @classmethod
+    def validate_price_range(cls, v: float | None, info) -> float | None:
+        if info.data and v is not None:
+            price_min = info.data.get("price_min")
+            if price_min is not None and v < price_min:
+                raise ValueError("price_max must be greater than price_min")
         return v
 
 
@@ -105,5 +120,4 @@ class VectorSearchResult(BaseModel):
     score: float = Field(..., ge=0, le=1)
     metadata: dict[str, str | int | float] | None = Field(None)
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)

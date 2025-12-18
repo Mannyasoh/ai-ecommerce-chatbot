@@ -170,20 +170,31 @@ class TestFunctionCalling:
         )
         self.db_manager.add_product(self.test_product)
 
+    @patch("src.functions.product_functions.vector_store")
     @patch("src.functions.product_functions.db_manager")
-    def test_search_products_function(self, mock_db):
+    def test_search_products_function(self, mock_db, mock_vector_store):
         """Test search_products function"""
         from src.functions.product_functions import search_products
+        from src.database.models import VectorSearchResult
 
-        # Mock database response
-        mock_db.search_products.return_value = [self.test_product]
+        # Create mock vector search result
+        mock_search_result = VectorSearchResult(
+            product=self.test_product,
+            score=0.95,
+            metadata={}
+        )
+
+        # Mock vector store response
+        mock_vector_store.search_products.return_value = [mock_search_result]
 
         result = search_products("iPhone", max_results=5)
 
         assert result["success"] is True
-        assert result["products_found"] > 0
-        assert len(result["products"]) > 0
+        assert result["products_found"] == 1
+        assert len(result["products"]) == 1
         assert result["products"][0]["name"] == "Test iPhone"
+        assert result["products"][0]["price"] == 799.99
+        assert result["products"][0]["similarity_score"] == 0.95
 
     @patch("src.functions.order_functions.db_manager")
     def test_create_order_function(self, mock_db):
@@ -259,6 +270,95 @@ class TestAgents:
         assert agent == "order_agent"
 
 
+class TestIntegration:
+    """Integration tests with real data/components"""
+
+    def test_search_products_integration(self):
+        """Integration test for search_products with real vector store"""
+        from src.functions.product_functions import search_products
+        
+        result = search_products("laptop", max_results=3)
+        
+        assert result["success"] is True
+        assert result["products_found"] > 0
+        assert len(result["products"]) > 0
+        
+        # Check that results have proper structure and reasonable content
+        for product in result["products"]:
+            assert "name" in product
+            assert "description" in product
+            assert "price" in product
+            assert "category" in product
+            assert "similarity_score" in product
+            assert 0 <= product["similarity_score"] <= 1
+            
+        # For laptop search, expect laptops category (semantic search should work)
+        categories = [p["category"] for p in result["products"]]
+        assert "laptops" in categories, f"Expected laptops in categories, got: {categories}"
+
+    def test_create_order_integration(self):
+        """Integration test for create_order with real database"""
+        from src.functions.order_functions import create_order
+        
+        # Use a known product from the sample data
+        result = create_order("DJI Mini 3", quantity=2)
+        
+        assert result["success"] is True
+        assert result["order_id"] is not None
+        assert result["product_name"] == "DJI Mini 3"
+        assert result["quantity"] == 2
+        assert result["total_price"] > 0
+        assert "message" in result
+
+    def test_product_availability_integration(self):
+        """Integration test for product availability check"""
+        from src.functions.product_functions import check_product_availability
+        
+        result = check_product_availability("iPhone")
+        
+        assert result["success"] is True
+        assert result["available"] in [True, False]  # Could be either
+        assert result["product_name"] is not None
+        assert "message" in result
+
+    def test_get_products_by_category_integration(self):
+        """Integration test for category-based product search"""
+        from src.functions.product_functions import get_products_by_category
+        
+        result = get_products_by_category("smartphones", limit=5)
+        
+        assert result["success"] is True
+        assert result["category"] == "smartphones"
+        assert result["products_found"] > 0
+        
+        # All products should be smartphones
+        for product in result["products"]:
+            assert product["category"] == "smartphones"
+
+    def test_orchestrator_integration(self):
+        """Integration test for orchestrator with real agents"""
+        from src.database.models import ChatMessage
+        
+        orchestrator = ConversationOrchestrator()
+        
+        # Test product inquiry routing
+        chat_history = []
+        result = orchestrator.determine_agent("What laptops do you have?", chat_history)
+        assert result == "rag_agent"
+        
+        # Test order intent with product context
+        chat_history = [
+            ChatMessage(role="assistant", content="We have MacBook Pro for $1999 - Available"),
+        ]
+        result = orchestrator.determine_agent("I'll take it", chat_history)
+        assert result == "order_agent"
+        
+        # Test conversation summary
+        summary = orchestrator.get_conversation_summary(chat_history)
+        assert "total_messages" in summary
+        assert "current_agent" in summary
+
+
 class TestEndToEnd:
     """End-to-end integration tests"""
 
@@ -291,6 +391,28 @@ class TestEndToEnd:
         # Should use order agent
         assert result.get("success") is True
         assert result.get("agent") == "order_agent"
+
+    def test_full_system_robustness(self):
+        """Test system handles edge cases gracefully"""
+        from src.functions.product_functions import search_products
+        from src.functions.order_functions import create_order
+        
+        # Test empty query - should return proper error
+        result = search_products("", max_results=1)
+        assert result["success"] is False  # Should properly reject empty query
+        assert "error" in result
+        assert "validation error" in result["error"].lower()
+        
+        # Test non-existent product order
+        result = create_order("NonExistentProduct12345", quantity=1)
+        assert result["success"] is False
+        assert "error" in result
+        assert "not found" in result["error"].lower()
+        
+        # Test search with very specific non-existent product
+        result = search_products("SuperSpecificNonExistentGadget2024XYZ", max_results=5)
+        assert result["success"] is True  # Search succeeds but finds no relevant results
+        # May return 0 results or unrelated results with low similarity scores
 
 
 if __name__ == "__main__":

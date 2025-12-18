@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from ..database.database import db_manager
 from ..database.models import ProductSearchRequest
 from ..models.responses import (
@@ -15,9 +17,8 @@ def search_products(
     max_results: int = 5,
     price_min: float | None = None,
     price_max: float | None = None,
-) -> ProductSearchResponse:
+) -> dict:
     try:
-        # Validate input
         search_request = ProductSearchRequest(
             query=query,
             category=category,
@@ -26,14 +27,12 @@ def search_products(
             price_max=price_max,
         )
 
-        # Prepare price filter for vector search
         price_filter: dict[str, float] = {}
         if search_request.price_min is not None:
             price_filter["min_price"] = search_request.price_min
         if search_request.price_max is not None:
             price_filter["max_price"] = search_request.price_max
 
-        # Perform vector search
         search_results = vector_store.search_products(
             query=search_request.query,
             n_results=search_request.max_results,
@@ -41,7 +40,6 @@ def search_products(
             price_filter=price_filter if price_filter else None,
         )
 
-        # Format results for function response
         products: list[dict] = []
         for result in search_results:
             product_dict = {
@@ -54,13 +52,12 @@ def search_products(
                 "similarity_score": round(result.score, 3),
             }
 
-            # Add specifications if available
             if result.product.specifications:
                 product_dict["specifications"] = result.product.specifications
 
             products.append(product_dict)
 
-        return ProductSearchResponse(
+        response = ProductSearchResponse(
             success=True,
             query=search_request.query,
             products_found=len(products),
@@ -74,30 +71,32 @@ def search_products(
                 "max_results": search_request.max_results,
             },
         )
+        return asdict(response)
 
     except Exception as e:
-        return ProductSearchResponse(
+        response = ProductSearchResponse(
             success=False,
             error=str(e),
             query=query,
             products_found=0,
             products=[],
         )
+        return asdict(response)
 
 
-def get_product_details(product_id: str) -> ProductDetailsResponse:
+def get_product_details(product_id: str) -> dict:
     try:
-        # Get product from database
         product = db_manager.get_product(product_id)
 
         if not product:
-            return ProductDetailsResponse(
+            response = ProductDetailsResponse(
                 success=False,
                 error=f"Product with ID '{product_id}' not found",
                 product=None,
             )
+            return asdict(response)
 
-        return ProductDetailsResponse(
+        response = ProductDetailsResponse(
             success=True,
             product={
                 "product_id": product.product_id,
@@ -112,16 +111,17 @@ def get_product_details(product_id: str) -> ProductDetailsResponse:
                 ),
             },
         )
+        return asdict(response)
 
     except Exception as e:
-        return ProductDetailsResponse(success=False, error=str(e), product=None)
+        response = ProductDetailsResponse(success=False, error=str(e), product=None)
+        return asdict(response)
 
 
 def get_products_by_category(
     category: str, limit: int = 10
-) -> CategoryProductsResponse:
+) -> dict:
     try:
-        # Search products by category in database
         products = db_manager.search_products(query="", category=category, limit=limit)
 
         products_list: list[dict] = []
@@ -141,40 +141,41 @@ def get_products_by_category(
                 }
             )
 
-        return CategoryProductsResponse(
+        response = CategoryProductsResponse(
             success=True,
             category=category,
             products_found=len(products_list),
             products=products_list,
         )
+        return asdict(response)
 
     except Exception as e:
-        return CategoryProductsResponse(
+        response = CategoryProductsResponse(
             success=False,
             error=str(e),
             category=category,
             products_found=0,
             products=[],
         )
+        return asdict(response)
 
 
 def check_product_availability(
     product_name: str,
-) -> ProductAvailabilityResponse:
+) -> dict:
     try:
-        # Search for product by name
         products = db_manager.search_products(query=product_name, limit=5)
 
         if not products:
-            return ProductAvailabilityResponse(
+            response = ProductAvailabilityResponse(
                 success=False,
                 product_name=product_name,
                 available=False,
                 message=f"Product '{product_name}' not found in our catalog",
                 alternatives=[],
             )
+            return asdict(response)
 
-        # Find exact or closest match
         best_match = None
         alternatives: list = []
 
@@ -194,7 +195,7 @@ def check_product_availability(
             available = best_match.stock_status == "in_stock"
             status = "Available" if available else "Not available"
             message = f"Product found: {best_match.name} - {status} ({best_match.stock_status})"
-            return ProductAvailabilityResponse(
+            response = ProductAvailabilityResponse(
                 success=True,
                 product_name=best_match.name,
                 product_id=best_match.product_id,
@@ -212,8 +213,9 @@ def check_product_availability(
                     for alt in alternatives[:3]
                 ],
             )
+            return asdict(response)
         else:
-            return ProductAvailabilityResponse(
+            response = ProductAvailabilityResponse(
                 success=False,
                 product_name=product_name,
                 available=False,
@@ -228,15 +230,17 @@ def check_product_availability(
                     for alt in alternatives[:5]
                 ],
             )
+            return asdict(response)
 
     except Exception as e:
-        return ProductAvailabilityResponse(
+        response = ProductAvailabilityResponse(
             success=False,
             error=str(e),
             product_name=product_name,
             available=False,
             alternatives=[],
         )
+        return asdict(response)
 
 
 PRODUCT_FUNCTION_SCHEMAS = [
