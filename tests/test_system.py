@@ -446,7 +446,9 @@ class TestEndToEnd:
         )
 
         # Test non-existent product order - with vector search, it might find similar products
-        result = create_order("CompletelyMadeUpProductThatDoesNotExistAnywhere123456789", quantity=1)
+        result = create_order(
+            "CompletelyMadeUpProductThatDoesNotExistAnywhere123456789", quantity=1
+        )
         # Vector search might still find something, but let's check it handles the request properly
         assert "success" in result
         if result["success"]:
