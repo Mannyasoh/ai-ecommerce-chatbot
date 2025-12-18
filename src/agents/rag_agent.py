@@ -13,6 +13,20 @@ from ..functions.product_functions import (
     search_products,
 )
 
+try:
+    from langfuse.decorators import observe
+
+    LANGFUSE_AVAILABLE = True
+except ImportError:
+
+    def observe(*args, **kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
+    LANGFUSE_AVAILABLE = False
+
 
 class RAGAgent:
     def __init__(self, api_key: str | None = None) -> None:
@@ -51,6 +65,7 @@ class RAGAgent:
         message_lower = message.lower()
         return any(keyword in message_lower for keyword in product_keywords)
 
+    @observe(name="rag-agent-process")
     def process_message(
         self, message: str, chat_history: Sequence[ChatMessage]
     ) -> dict[str, str | bool | list]:
@@ -128,6 +143,7 @@ that you'll transfer them to our order specialist.""",
             {"type": "function", "function": schema} for schema in self.function_schemas
         ]
 
+    @observe(name="rag-function-calls")
     def _handle_function_calls(
         self, response_message, messages: list[dict[str, str]]
     ) -> dict[str, str | bool | list]:

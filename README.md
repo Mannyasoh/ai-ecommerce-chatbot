@@ -29,7 +29,8 @@ A sophisticated conversational AI system that combines RAG for product informati
 - Pre-commit hooks with code quality tools
 - GitHub Actions CI/CD pipeline
 - Type hints and mypy static analysis
-- Structured logging and error handling
+- Structured logging with Loguru
+- Langfuse integration for observability and tracing
 
 ## Architecture
 
@@ -88,7 +89,14 @@ Edit .env with your configuration:
 
 ```
 OPENAI_API_KEY=your_openai_api_key_here
+
+# Optional: Langfuse tracing for observability
+LANGFUSE_PUBLIC_KEY=your_langfuse_public_key
+LANGFUSE_SECRET_KEY=your_langfuse_secret_key
+LANGFUSE_HOST=https://cloud.langfuse.com
 ```
+
+**Note**: Langfuse integration is optional but recommended for production monitoring and debugging. The system will work fine without it, just with disabled tracing.
 
 ### 3. Load Sample Data
 

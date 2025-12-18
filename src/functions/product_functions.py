@@ -10,7 +10,22 @@ from ..models.responses import (
 )
 from ..vector_store.chroma_store import vector_store
 
+try:
+    from langfuse.decorators import observe
 
+    LANGFUSE_AVAILABLE = True
+except ImportError:
+
+    def observe(*args, **kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
+    LANGFUSE_AVAILABLE = False
+
+
+@observe(name="search-products")
 def search_products(
     query: str,
     category: str | None = None,

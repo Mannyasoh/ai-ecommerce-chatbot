@@ -11,7 +11,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from src.agents.orchestrator import orchestrator
-from src.config import settings, validate_environment
+from src.config import get_langfuse_client, settings, validate_environment
 from src.database.database import db_manager
 from src.database.models import ChatMessage
 from src.logging_config import configure_logging
@@ -26,6 +26,12 @@ class ECommerceChatbot:
         self.db_manager = db_manager
         self.vector_store = vector_store
         self.logger = logger.bind(component="chatbot")
+
+        self.langfuse = get_langfuse_client()
+        if self.langfuse:
+            self.logger.info("Langfuse tracing initialized")
+        else:
+            self.logger.info("Langfuse not configured - tracing disabled")
 
         self.logger.info("E-Commerce AI Chatbot initialized successfully")
         collection_info = self.vector_store.get_collection_info()
@@ -49,6 +55,24 @@ class ECommerceChatbot:
             self.chat_history = self.chat_history[-settings.max_chat_history :]
 
     def process_user_message(self, message: str) -> dict[str, str | bool | dict | list]:
+        try:
+            from langfuse.decorators import observe
+
+            if self.langfuse:
+
+                @observe(name="ecommerce-chat-session")
+                def _traced_process(msg: str) -> dict[str, str | bool | dict | list]:
+                    return self._process_message_internal(msg)
+
+                return _traced_process(message)
+            else:
+                return self._process_message_internal(message)
+        except ImportError:
+            return self._process_message_internal(message)
+
+    def _process_message_internal(
+        self, message: str
+    ) -> dict[str, str | bool | dict | list]:
         try:
             self.add_message_to_history("user", message)
             result = self.orchestrator.process_message(message, self.chat_history)

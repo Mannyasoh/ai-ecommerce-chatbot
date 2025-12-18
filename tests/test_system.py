@@ -419,6 +419,122 @@ class TestEndToEnd:
         # May return 0 results or unrelated results with low similarity scores
 
 
+class TestLangfuseIntegration:
+    """Test Langfuse tracing integration"""
+
+    def test_langfuse_config_handling(self):
+        """Test Langfuse configuration handling"""
+        from src.config import Settings, get_langfuse_client
+
+        # Test default config (should be None for missing keys)
+        settings = Settings()
+        assert settings.langfuse_configured is False
+
+        client = get_langfuse_client()
+        assert client is None
+
+    @patch.dict(
+        os.environ,
+        {
+            "LANGFUSE_PUBLIC_KEY": "test_public_key",
+            "LANGFUSE_SECRET_KEY": "test_secret_key",
+            "LANGFUSE_HOST": "https://test.langfuse.com",
+        },
+    )
+    def test_langfuse_config_with_keys(self):
+        """Test Langfuse configuration when keys are provided"""
+        from src.config import Settings
+
+        # Create new settings instance to pick up env vars
+        settings = Settings()
+        assert settings.langfuse_configured is True
+        assert settings.langfuse_public_key == "test_public_key"
+        assert settings.langfuse_secret_key == "test_secret_key"
+        assert settings.langfuse_host == "https://test.langfuse.com"
+
+    def test_observe_decorators_fallback(self):
+        """Test that observe decorators work as no-ops without Langfuse"""
+        from src.agents.orchestrator import ConversationOrchestrator
+        from src.agents.order_agent import OrderAgent
+        from src.agents.rag_agent import RAGAgent
+
+        # These should all initialize without issues, even without Langfuse configured
+        order_agent = OrderAgent()
+        rag_agent = RAGAgent()
+        orchestrator = ConversationOrchestrator()
+
+        assert order_agent is not None
+        assert rag_agent is not None
+        assert orchestrator is not None
+
+    def test_function_decorators_work(self):
+        """Test that function decorators don't break function calls"""
+        from src.functions.order_functions import get_order_status
+        from src.functions.product_functions import search_products
+
+        # Functions should still work with decorators
+        # Test get_order_status with non-existent order
+        result = get_order_status("NON-EXISTENT-ORDER")
+        assert result["success"] is False
+        assert "not found" in result["error"].lower()
+
+        # Test search_products (should work without Langfuse)
+        result = search_products("test", max_results=1)
+        assert "success" in result
+        assert "products" in result
+
+    def test_main_app_langfuse_integration(self):
+        """Test that main application handles Langfuse integration correctly"""
+        # Import after path setup
+        sys.path.insert(0, str(project_root))
+        from main import ECommerceChatbot
+
+        # Should initialize without issues
+        chatbot = ECommerceChatbot()
+        assert chatbot.langfuse is None  # Should be None without config
+
+        # Should still process messages normally
+        result = chatbot.process_user_message("help")
+        assert result.get("success") is True or "response" in result
+
+    @patch("src.config.get_langfuse_client")
+    def test_langfuse_client_import_error(self, mock_get_client):
+        """Test handling of Langfuse import errors"""
+        # Simulate ImportError
+        mock_get_client.side_effect = ImportError("Langfuse not available")
+
+        from src.agents.order_agent import OrderAgent
+
+        # Should still work even if import fails
+        agent = OrderAgent()
+        assert agent is not None
+
+    def test_langfuse_client_creation(self):
+        """Test Langfuse client creation with mocked configuration"""
+        # Create a mock Settings instance with Langfuse configured
+        mock_settings = Mock()
+        mock_settings.langfuse_configured = True
+        mock_settings.langfuse_public_key = "mock_key"
+        mock_settings.langfuse_secret_key = "mock_secret"
+        mock_settings.langfuse_host = "https://cloud.langfuse.com"
+
+        with patch("src.config.settings", mock_settings):
+            with patch("langfuse.Langfuse") as mock_langfuse_class:
+                mock_client = Mock()
+                mock_langfuse_class.return_value = mock_client
+
+                from src.config import get_langfuse_client
+
+                client = get_langfuse_client()
+
+                assert client is not None
+                mock_langfuse_class.assert_called_once_with(
+                    public_key="mock_key",
+                    secret_key="mock_secret",
+                    host="https://cloud.langfuse.com",
+                )
+
+
 if __name__ == "__main__":
     # Run tests
     pytest.main([__file__, "-v"])

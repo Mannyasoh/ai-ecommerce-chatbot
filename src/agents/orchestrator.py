@@ -4,6 +4,20 @@ from ..database.models import ChatMessage
 from .order_agent import order_agent
 from .rag_agent import rag_agent
 
+try:
+    from langfuse.decorators import observe
+
+    LANGFUSE_AVAILABLE = True
+except ImportError:
+
+    def observe(*args, **kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
+    LANGFUSE_AVAILABLE = False
+
 
 class ConversationOrchestrator:
     def __init__(self) -> None:
@@ -12,6 +26,7 @@ class ConversationOrchestrator:
         self.current_agent = None
         self.conversation_state = "product_inquiry"
 
+    @observe(name="agent-routing")
     def determine_agent(self, message: str, chat_history: Sequence[ChatMessage]) -> str:
         if self.order_agent.detect_order_intent(message):
             if self._has_product_context(chat_history):
@@ -52,6 +67,7 @@ class ConversationOrchestrator:
 
         return False
 
+    @observe(name="orchestrator-process")
     def process_message(
         self, message: str, chat_history: Sequence[ChatMessage]
     ) -> dict[str, str | bool | dict]:

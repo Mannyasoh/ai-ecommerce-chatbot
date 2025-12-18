@@ -14,6 +14,20 @@ from ..functions.order_functions import (
     validate_order_details,
 )
 
+try:
+    from langfuse.decorators import observe
+
+    LANGFUSE_AVAILABLE = True
+except ImportError:
+
+    def observe(*args, **kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
+    LANGFUSE_AVAILABLE = False
+
 
 class OrderAgent:
     def __init__(self, api_key: str | None = None) -> None:
@@ -49,6 +63,7 @@ class OrderAgent:
         message_lower = message.lower()
         return any(keyword in message_lower for keyword in order_keywords)
 
+    @observe(name="order-context-extraction")
     def extract_order_context(
         self, chat_history: Sequence[ChatMessage]
     ) -> dict[str, str | int | dict | list]:
@@ -121,6 +136,7 @@ class OrderAgent:
 
         return context
 
+    @observe(name="order-agent-process")
     def process_message(
         self, message: str, chat_history: Sequence[ChatMessage]
     ) -> dict[str, str | bool | list | dict]:
@@ -224,6 +240,7 @@ When handling order status requests:
             {"type": "function", "function": schema} for schema in self.function_schemas
         ]
 
+    @observe(name="order-function-calls")
     def _handle_function_calls(
         self,
         response_message,

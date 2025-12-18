@@ -4,7 +4,22 @@ from ..database.database import db_manager
 from ..database.models import OrderModel, OrderRequest, OrderStatus
 from ..models.responses import OrderCreationResponse
 
+try:
+    from langfuse.decorators import observe
 
+    LANGFUSE_AVAILABLE = True
+except ImportError:
+
+    def observe(*args, **kwargs):
+        def decorator(func):
+            return func
+
+        return decorator
+
+    LANGFUSE_AVAILABLE = False
+
+
+@observe(name="create-order")
 def create_order(
     product_name: str,
     quantity: int = 1,
@@ -91,6 +106,7 @@ def create_order(
         return asdict(response)
 
 
+@observe(name="get-order-status")
 def get_order_status(order_id: str) -> dict[str, str | bool | dict | None]:
     try:
         order = db_manager.get_order(order_id)

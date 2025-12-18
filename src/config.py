@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     openai_model: str = Field(default="gpt-4-turbo-preview")
     embedding_model: str = Field(default="text-embedding-3-small")
 
+    langfuse_public_key: str | None = Field(default=None)
+    langfuse_secret_key: str | None = Field(default=None)
+    langfuse_host: str = Field(default="https://cloud.langfuse.com")
+
     database_url: str = Field(default="sqlite:///./ecommerce_chatbot.db")
     database_echo: bool = Field(default=False)
 
@@ -26,6 +30,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False
     )
+
+    @property
+    def langfuse_configured(self) -> bool:
+        return bool(self.langfuse_public_key and self.langfuse_secret_key)
 
 
 def get_settings() -> Settings:
@@ -51,4 +59,22 @@ def get_openai_client():
     except ImportError as e:
         raise ImportError(
             "OpenAI package not installed. Please install with: pip install openai"
+        ) from e
+
+
+def get_langfuse_client():
+    if not settings.langfuse_configured:
+        return None
+
+    try:
+        from langfuse import Langfuse
+
+        return Langfuse(
+            public_key=settings.langfuse_public_key,
+            secret_key=settings.langfuse_secret_key,
+            host=settings.langfuse_host,
+        )
+    except ImportError as e:
+        raise ImportError(
+            "Langfuse package not installed. Please install with: pip install langfuse"
         ) from e
